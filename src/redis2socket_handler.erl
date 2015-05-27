@@ -30,13 +30,25 @@ websocket_init(_TransportName, Req, _Opts) ->
 websocket_handle({text, Msg}, Req, State) ->
     lager:info("[+] HANDLE ... ~p", [Msg]),
 
-    lager:info("[+] WHERE IS ~p ? ~p", [channel_name, gproc:where({n, l, channel_name})]),
-    case gproc:where({n, l, channel_name}) of 
-        undefined -> 
-            supervisor:start_child(redis_sup, [channel_name, self()]);
-        ExistingRedisHandlerPid ->
-            lager:info("[+] Found: ~p", [ExistingRedisHandlerPid]),
-            ExistingRedisHandlerPid ! {new_subscriber_arrived, self()}
+    MessageItems = re:split(Msg, ",", [{return, list}]),
+    [Command | [Channel | _]] = MessageItems,
+    case Command of 
+        "SUBSCRIBE" ->
+            lager:info("[+] Subscribing for channels: ~p", [Channel]),
+            
+            lager:info("[+] If does already exist ~p? ~p", [Channel, gproc:where({n, l, Channel})]),    
+            case gproc:where({n, l, Channel}) of 
+                undefined -> 
+                    supervisor:start_child(redis_sup, [Channel, self()]);
+                ExistingRedisHandlerPid ->
+                    lager:info("[+] Found: ~p", [ExistingRedisHandlerPid]),
+                    ExistingRedisHandlerPid ! {new_subscriber_arrived, self()}
+            end;
+
+        "UNSUBSCRIBE" ->    
+            lager:info("[+] UnSubscribing from channels: ~p", [Channel]);
+        _ ->
+            lager:info("[+] Unknown command: ~p", [Command])
     end,
 
     {reply, {text, << "responding to ", Msg/binary >>}, Req, State, hibernate };

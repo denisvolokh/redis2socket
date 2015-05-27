@@ -22,9 +22,9 @@
 %% ------------------------------------------------------------------
 
 start_link(Name, WSHandlerPid) ->
-	lager:info("[+] Starting REDIS HANDLER with Name: ~p ~p", [Name, WSHandlerPid]),
-    % io:format("[+] Starting REDIS HANDLER with Name: ~p ~p ~n", [Name, WSHandlerPid]),
-    gen_server:start_link({local, test}, ?MODULE, [Name, WSHandlerPid], []).
+	lager:info("[+ RH] Starting REDIS HANDLER with Name: ~p ~p", [Name, WSHandlerPid]),
+    gen_server:start_link({local, list_to_atom(Name)}, ?MODULE, [Name, WSHandlerPid], []).
+    % gen_server:start_link({local, test}, ?MODULE, [Name, WSHandlerPid], []).
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -41,24 +41,22 @@ init(Args) ->
 	[Name,WSHandlerPid] = Args,
 	gproc:reg({n, l, Name}),
     
-	lager:info("[+] Connecting to Redis ... ~p ~p", [Name, WSHandlerPid]),
-    % io:format("[+] Connecting to Redis ... ~p~n", [Args]),
+	lager:info("[+ RH] Connecting to Redis ... ~p ~p", [Name, WSHandlerPid]),
 
 	case eredis_sub:start_link("localhost", 6379, "") of 
 		{ok, Sub} ->
-			lager:info("[+] ... ~p connected!~n", [Sub]),
-            % io:format("[+] ... ~p connected!~n", [Sub]),
+			lager:info("[+ RH] ... ~p connected!", [Sub]),
 
             eredis_sub:controlling_process(Sub, self()),
 
-            Channel = atom_to_list(Name),
-            io:format("[+] Subscribing for channel: ~p ~n", [Channel]),            
+            % Channel = atom_to_list(Name),
+            Channel = Name,
+            lager:info("[+ RH] Subscribing for channel: ~p", [Channel]),            
             R = eredis_sub:subscribe(Sub, [Channel]),    
 
             {ok, #state{sub = Sub, ws_handler = WSHandlerPid}};
 		{error, Error} ->
-			lager:info("[-] Unable connect to Redis: ~p ...", [Error]),
-            io:format("[-] Unable connect to Redis: ~p ... ~n", [Error]),
+			lager:info("[- RH] Unable connect to Redis: ~p ...", [Error]),
 			{ok, #state{}}
 	end.
 

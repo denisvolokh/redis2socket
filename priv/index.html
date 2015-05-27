@@ -8,7 +8,7 @@
     {
         //ws.send("hello world!");
         // ws.send(JSON.stringify(["SUBSCRIBE", "channel_name"]));
-        ws.send("SUBSCRIBE, channel1, channel2");
+        ws.send(document.getElementById('channel_id').value);
         console.log('Message sent');
     }
 
@@ -44,6 +44,7 @@
 <body>
 <div id="sse">
    <a href="javascript:open()">Open websocket connection</a><br/>
+   <input type="text" id="channel_id" value="SUBSCRIBE,channel1"><br>
    <a href="javascript:send()">Send Message</a>
 </div>
 <div id="msgs">
