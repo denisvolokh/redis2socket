@@ -15,7 +15,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--record(state, {sub, ws_handler}).
+-record(state, {sub, sockets}).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
@@ -54,7 +54,7 @@ init(Args) ->
             lager:info("[+ RH] Subscribing for channel: ~p", [Channel]),            
             R = eredis_sub:subscribe(Sub, [Channel]),    
 
-            {ok, #state{sub = Sub, ws_handler = WSHandlerPid}};
+            {ok, #state{sub = Sub, sockets = [WSHandlerPid]}};
 		{error, Error} ->
 			lager:info("[- RH] Unable connect to Redis: ~p ...", [Error]),
 			{ok, #state{}}
@@ -94,9 +94,9 @@ handle_cast(Message, State) ->
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
 handle_info({new_subscriber_arrived, Pid}, State) -> 
-    io:format("[+] New Subscriber: ~p~n",[Pid]),
-    % Save subscribers
-    {noreply, State};
+    lager:info("[+] New Subscriber: ~p~n",[Pid]),
+    
+    {noreply, #state{sub = State#state.sub, sockets = State#state.sockets ++ [Pid]}};
 
 handle_info({subscriber_left, Pid}, State) -> 
     io:format("[+] New Subscriber: ~p~n",[Pid]),
@@ -104,16 +104,16 @@ handle_info({subscriber_left, Pid}, State) ->
     {noreply, State};
 
 handle_info({subscribed, Channel, _}, State) -> 
-    io:format("[+] Subscribed: ~p~n",[Channel]),
+    lager:info("[+ RH] Subscribed: ~p~n",[Channel]),
 	eredis_sub:ack_message(State#state.sub),
     {noreply, State};
 
 handle_info({message, Channel, Message, _}, State) -> 
-    io:format("[+] Received: ~p ~p ~n",[Channel, Message]),
+    lager:info("[+ RH] Received from redis: ~p ~p ~n",[Channel, Message]),
 	eredis_sub:ack_message(State#state.sub),
 
-	io:format("[+] Sending back to ws: ~p ~p ~n",[State#state.ws_handler, Message]),
-	State#state.ws_handler ! {message, Message},
+    send_message(State#state.sockets, Message),
+
     {noreply, State}.
 
 %% Server termination
@@ -127,3 +127,12 @@ code_change(_OldVersion, _Server, _Extra) -> {ok, _Server}.
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
+
+send_message([], Message) ->
+    ok;
+
+send_message([Socket|Sockets], Message) ->
+    lager:info("[+ RH] Send message to socket: ~p ~p", [Socket, Message]),
+    Socket ! {message, Message},
+    send_message(Sockets, Message).
+

@@ -28,20 +28,20 @@ websocket_init(_TransportName, Req, _Opts) ->
     {ok, Req, undefined_state}.
 
 websocket_handle({text, Msg}, Req, State) ->
-    lager:info("[+] HANDLE ... ~p", [Msg]),
+    lager:info("[+] HANDLE ... ~p ~p", [Msg, Req]),
 
     MessageItems = re:split(Msg, ",", [{return, list}]),
     [Command | [Channel | _]] = MessageItems,
     case Command of 
         "SUBSCRIBE" ->
-            lager:info("[+] Subscribing for channels: ~p", [Channel]),
+            lager:info("[+ SH] Subscribing for channels: ~p", [Channel]),
             
-            lager:info("[+] If does already exist ~p? ~p", [Channel, gproc:where({n, l, Channel})]),    
+            lager:info("[+ SH] If does already exist ~p? ~p", [Channel, gproc:where({n, l, Channel})]),    
             case gproc:where({n, l, Channel}) of 
                 undefined -> 
                     supervisor:start_child(redis_sup, [Channel, self()]);
                 ExistingRedisHandlerPid ->
-                    lager:info("[+] Found: ~p", [ExistingRedisHandlerPid]),
+                    lager:info("[+ SH] Found: ~p", [ExistingRedisHandlerPid]),
                     ExistingRedisHandlerPid ! {new_subscriber_arrived, self()}
             end;
 
@@ -55,7 +55,7 @@ websocket_handle({text, Msg}, Req, State) ->
 
 
 websocket_handle(_Any, Req, State) ->
-    lager:info("[+] HANDLE ..."),
+    lager:info("[+ SH] HANDLE ..."),
     {reply, {text, << "whut?">>}, Req, State, hibernate }.
 
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
@@ -63,7 +63,7 @@ websocket_info({timeout, _Ref, Msg}, Req, State) ->
     {reply, {text, Msg}, Req, State};
 
 websocket_info({message, Msg}, Req, State) ->
-    lager:info("[+] Message from Redis ... ~p", [Msg]),
+    lager:info("[+ SH] Message from Redis ... ~p", [Msg]),
     {reply, {text, Msg}, Req, State};
 
 websocket_info(_Info, Req, State) ->
