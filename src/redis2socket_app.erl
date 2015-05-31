@@ -20,12 +20,14 @@ start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
             {'_', [
                 {"/", cowboy_static, {file, "priv/index.html"}},
-                {"/websocket", redis2socket_handler, []}
+                {"/websocket", websocket_handler, []},
+                {"/static/[...]", cowboy_static, {dir, "priv/static"}}
             ]}
         ]),
 
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}], [{env, [{dispatch, Dispatch}]}]),
-    redis2socket_sup:start_link().
+    
+    redis_sup:start_link().
 
 % https://github.com/ninenines/cowboy/tree/master/examples/websocket
 
