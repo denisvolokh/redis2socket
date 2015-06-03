@@ -21,9 +21,9 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_link(Name, WSHandlerPid) ->
-	lager:info("[+ RH] Starting REDIS HANDLER with Name: ~p ~p", [Name, WSHandlerPid]),
-    gen_server:start_link({local, list_to_atom(Name)}, ?MODULE, [Name, WSHandlerPid], []).
+start_link(Name, SocketHandlerPid) ->
+	lager:info("[+ RH] Starting REDIS HANDLER with Name: ~p ~p", [Name, SocketHandlerPid]),
+    gen_server:start_link({local, list_to_atom(Name)}, ?MODULE, [Name, SocketHandlerPid], []).
     % gen_server:start_link({local, test}, ?MODULE, [Name, WSHandlerPid], []).
 
 start_link() ->
@@ -38,10 +38,10 @@ stop() ->
 %% ------------------------------------------------------------------
 
 init(Args) ->
-	[Name,WSHandlerPid] = Args,
+	[Name, SocketHandlerPid] = Args,
 	gproc:reg({n, l, Name}),
     
-	lager:info("[+ RH] Connecting to Redis ... ~p ~p", [Name, WSHandlerPid]),
+	lager:info("[+ RH] Connecting to Redis ... ~p ~p", [Name, SocketHandlerPid]),
 
 	case eredis_sub:start_link("localhost", 6379, "") of 
 		{ok, Sub} ->
@@ -54,7 +54,7 @@ init(Args) ->
             lager:info("[+ RH] Subscribing for channel: ~p", [Channel]),            
             R = eredis_sub:subscribe(Sub, [Channel]),    
 
-            {ok, #state{sub = Sub, sockets = [WSHandlerPid]}};
+            {ok, #state{sub = Sub, sockets = [SocketHandlerPid]}};
 		{error, Error} ->
 			lager:info("[- RH] Unable connect to Redis: ~p ...", [Error]),
 			{ok, #state{}}
@@ -93,15 +93,37 @@ handle_cast(Message, State) ->
 % {noreply,NewState,Timeout} 
 % {noreply,NewState,hibernate}
 % {stop,Reason,NewState}
-handle_info({new_subscriber_arrived, Pid}, State) -> 
+handle_info({websocket_subscribe, Pid}, State) -> 
     lager:info("[+] New Subscriber: ~p~n",[Pid]),
     
-    {noreply, #state{sub = State#state.sub, sockets = State#state.sockets ++ [Pid]}};
+    case lists:member(Pid, State#state.sockets) of 
+        false ->
+            NewSubscribers = State#state.sockets ++ [Pid],
+            lager:info("[+ RH] Subscribers ~p !", [NewSubscribers]),
+            {noreply, #state{sub = State#state.sub, sockets = NewSubscribers}};
 
-handle_info({subscriber_left, Pid}, State) -> 
-    io:format("[+] New Subscriber: ~p~n",[Pid]),
-    % Save subscribers
-    {noreply, State};
+        true ->
+            lager:info("[+ RH] ~p is already in the list (~p)!", [Pid, State#state.sockets]),
+            {noreply, State}
+    end;
+
+handle_info({websocket_unsubscribe, Pid}, State) -> 
+    lager:info("[+ RH] UnSubscribe: ~p~n",[Pid]),
+    
+    case lists:member(Pid, State#state.sockets) of 
+        true ->
+            LeftSubscribers = lists:delete(Pid, State#state.sockets),
+
+            case length(LeftSubscribers) of 
+                0 ->
+                    {stop, "No subscribers letf.", undefined};
+                _ ->
+                    {noreply, #state{sub = State#state.sub, sockets = LeftSubscribers}}    
+            end;
+
+        false ->
+            {noreply, State}
+    end;
 
 handle_info({subscribed, Channel, _}, State) -> 
     lager:info("[+ RH] Subscribed: ~p~n",[Channel]),

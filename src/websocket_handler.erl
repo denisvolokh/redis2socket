@@ -68,9 +68,11 @@ terminate(_Reason, _Req, _State) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------    
 
-spawn_listener([]) ->
-    ok;
-
+% unsubscribe([]) -> ok;
+% unsubscribe([Channel | Channels]) ->
+    % ExistingProcess = gproc:where({n, l, Channel}),
+    
+spawn_listener([]) -> ok;
 spawn_listener([Channel | Channels]) ->
     lager:info("[+ SH] Spawn Redis Listener process for channel: ~p", [Channel]),
     
@@ -83,7 +85,7 @@ spawn_listener([Channel | Channels]) ->
             supervisor:start_child(redis_sup, [Channel, self()]);
         _ ->
             lager:info("[+ SH] Found: ~p", [ExistingProcess]),
-            ExistingProcess ! {new_subscriber_arrived, self()}
+            ExistingProcess ! {websocket_subscribe, self()}
     end,
 
     spawn_listener(Channels).
