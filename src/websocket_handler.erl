@@ -32,13 +32,13 @@ websocket_handle({text, Msg}, Req, State) ->
 
             lager:info("[+] UnSubscribing from channels: ~p", [Channels]),
             unsubscribe(Channels);    
-            
+
         _ ->
 
             lager:info("[+] Unknown command: ~p", [Command])
     end,
 
-    {reply, {text, << "responding to ", Msg/binary >>}, Req, State, hibernate };
+    {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State, hibernate };
 
 
 websocket_handle(_Any, Req, State) ->
