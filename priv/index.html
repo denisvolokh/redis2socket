@@ -28,8 +28,9 @@
         {
             var received_msg = evt.data;
             console.log("Received: " + received_msg);
-            var txt = document.createTextNode("Simon says: " + received_msg);
+            var txt = document.createTextNode("Received message: " + received_msg);
             document.getElementById('msgs').appendChild(txt);
+            document.getElementById('msgs').appendChild(document.createElement("br"));
         };
         ws.onclose = function()
         {
@@ -45,7 +46,7 @@
 <div id="sse">
    <a href="javascript:open()">Open websocket connection</a><br/>
    <input type="text" id="channel_id" value="SUBSCRIBE,channel1"><br>
-   <a href="javascript:send()">Send Message</a>
+   <a href="javascript:send()">Send Command</a>
 </div>
 <div id="msgs">
 </div>
