@@ -116,7 +116,8 @@ handle_info({websocket_unsubscribe, Pid}, State) ->
 
             case length(LeftSubscribers) of 
                 0 ->
-                    {stop, "No subscribers letf.", undefined};
+                    lager:info("[+ RH] No subscribers left, terminating Redis Handler!"),
+                    {stop, normal, State};
                 _ ->
                     {noreply, #state{sub = State#state.sub, sockets = LeftSubscribers}}    
             end;

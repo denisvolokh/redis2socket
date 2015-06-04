@@ -30,8 +30,9 @@ websocket_handle({text, Msg}, Req, State) ->
 
         "UNSUBSCRIBE" ->    
 
-            lager:info("[+] UnSubscribing from channels: ~p", [Channels]);
-
+            lager:info("[+] UnSubscribing from channels: ~p", [Channels]),
+            unsubscribe(Channels);    
+            
         _ ->
 
             lager:info("[+] Unknown command: ~p", [Command])
@@ -68,10 +69,21 @@ terminate(_Reason, _Req, _State) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------    
 
-% unsubscribe([]) -> ok;
-% unsubscribe([Channel | Channels]) ->
-    % ExistingProcess = gproc:where({n, l, Channel}),
-    
+unsubscribe([]) -> ok;
+unsubscribe([Channel | Channels]) ->
+    ExistingProcess = gproc:where({n, l, Channel}),
+
+    case ExistingProcess of 
+        undefined -> 
+            lager:info("[+ SH] Could not find Redis Handler process for channel ~p", Channel);
+        _ ->
+            lager:info("[+ SH] Found: ~p", [ExistingProcess]),
+            ExistingProcess ! {websocket_unsubscribe, self()}
+    end,
+
+    unsubscribe(Channels).
+
+
 spawn_listener([]) -> ok;
 spawn_listener([Channel | Channels]) ->
     lager:info("[+ SH] Spawn Redis Listener process for channel: ~p", [Channel]),
