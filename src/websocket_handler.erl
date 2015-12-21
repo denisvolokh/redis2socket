@@ -1,12 +1,15 @@
 -module(websocket_handler).
 % -behaviour(cowboy_http_handler).
 -behaviour(cowboy_websocket_handler).
--export([init/2]).
--export([terminate/3]).
+-export([init/3]).
+-export([handle/2]).
 -export([websocket_init/3]).
 -export([websocket_handle/3]).
 -export([websocket_info/3]).
 -export([websocket_terminate/3]).
+-export([terminate/3]).
+
+% https://marcelog.github.io/articles/erlang_websocket_server_cowboy_tutorial.html
 
 init({tcp, http}, _Req, _Opts) ->
     lager:info("[+] INIT ..."),
@@ -14,6 +17,11 @@ init({tcp, http}, _Req, _Opts) ->
 % init(Req, Opts) ->
 %     lager:info("[+] INIT ..."),
 %     {cowboy_websocket, Req, Opts}.
+
+handle(Req, State) ->
+    lager:debug("Request not expected: ~p", [Req]),  
+    {ok, Req2} = cowboy_http_req:reply(404, [{'Content-Type', <<"text/html">>}]),  
+    {ok, Req2, State}.
 
 websocket_init(_TransportName, Req, _Opts) ->
     lager:info("[+] WEBSOCKET_INIT ..."),
@@ -45,7 +53,7 @@ websocket_handle({text, Msg}, Req, State) ->
     {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State};
 websocket_handle(_Data, Req, State) ->
     lager:info("[+ WebSocketHandler] HANDLE ..."),
-    {ok, Req, State}
+    {ok, Req, State}.
     % {reply, {text, << "whut?">>}, Req, State, hibernate }.
 
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
