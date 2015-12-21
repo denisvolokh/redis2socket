@@ -1,15 +1,19 @@
 -module(websocket_handler).
 % -behaviour(cowboy_http_handler).
 -behaviour(cowboy_websocket_handler).
--export([init/2, terminate/3]).
--export([
-    websocket_init/3, websocket_handle/3,
-    websocket_info/3, websocket_terminate/3
-]).
+-export([init/2]).
+-export([terminate/3]).
+-export([websocket_init/3]).
+-export([websocket_handle/3]).
+-export([websocket_info/3]).
+-export([websocket_terminate/3]).
 
-init(Req, Opts) ->
+init({tcp, http}, _Req, _Opts) ->
     lager:info("[+] INIT ..."),
-    {cowboy_websocket, Req, Opts}.
+    {upgrade, protocol, cowboy_websocket}.
+% init(Req, Opts) ->
+%     lager:info("[+] INIT ..."),
+%     {cowboy_websocket, Req, Opts}.
 
 websocket_init(_TransportName, Req, _Opts) ->
     lager:info("[+] WEBSOCKET_INIT ..."),
@@ -37,22 +41,19 @@ websocket_handle({text, Msg}, Req, State) ->
 
             lager:info("[+] Unknown command: ~p", [Command])
     end,
-
-    {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State, hibernate };
-
-
-websocket_handle(_Any, Req, State) ->
-    lager:info("[+ SH] HANDLE ..."),
-    {reply, {text, << "whut?">>}, Req, State, hibernate }.
+    % {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State, hibernate };
+    {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State};
+websocket_handle(_Data, Req, State) ->
+    lager:info("[+ WebSocketHandler] HANDLE ..."),
+    {ok, Req, State}
+    % {reply, {text, << "whut?">>}, Req, State, hibernate }.
 
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
     lager:info("[+] INFO ... ~p", [{timeout, _Ref, Msg}]),
     {reply, {text, Msg}, Req, State};
-
 websocket_info({message, Msg}, Req, State) ->
     lager:info("[+ SH] Message from Redis ... ~p", [Msg]),
     {reply, {text, Msg}, Req, State};
-
 websocket_info(_Info, Req, State) ->
     lager:info("[+] INFO ... ~p", [_Info]),
     {ok, Req, State, hibernate}.
