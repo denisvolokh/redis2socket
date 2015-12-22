@@ -19,8 +19,8 @@
             return;
         }
         /* @todo: Change to your own server IP address */
-        ws = new WebSocket("ws://192.168.99.100:7878");
-        // ws = new WebSocket("ws://192.168.23.32:7878/websocket");
+        // ws = new WebSocket("ws://192.168.99.100:7878/websocket");
+        ws = new WebSocket("ws://192.168.23.32:7878/websocket");
         ws.onopen = function() {
             console.log('Connected');
         };
