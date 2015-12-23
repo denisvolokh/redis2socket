@@ -43,7 +43,7 @@ init(Args) ->
     
 	lager:info("[+ RH] Connecting to Redis ... ~p ~p", [Name, SocketHandlerPid]),
 
-    RedisHostAddress = os:getenv("REDIS_PORT_6379_TCP_ADDR") of false -> "0.0.0.0"; Any -> Any end,
+    RedisHostAddress = case os:getenv("REDIS_PORT_6379_TCP_ADDR") of false -> "0.0.0.0"; Any -> Any end,
     lager:info("[+ RH] Redis Host Found: ~p", [RedisHostAddress]),
 
     case eredis_sub:start_link(RedisHostAddress, 6379, "") of 
