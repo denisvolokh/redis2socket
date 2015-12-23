@@ -25,7 +25,7 @@ handle(Req, State) ->
 
 websocket_init(_TransportName, Req, _Opts) ->
     lager:info("[+] WEBSOCKET_INIT ..."),
-    {ok, Req, undefined_state, 60000, hibernate}.
+    {ok, Req, undefined_state, hibernate}.
 
 websocket_handle({text, Msg}, Req, State) ->
     lager:info("[+] HANDLE ... ~p", [Msg]),
