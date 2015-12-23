@@ -43,30 +43,25 @@ init(Args) ->
     
 	lager:info("[+ RH] Connecting to Redis ... ~p ~p", [Name, SocketHandlerPid]),
 
-    case os:getenv("REDIS_PORT_6379_TCP_ADDR") of 
-        RedisHostAddress ->
-            lager:info("[+ RH] Redis Host Found: ~p", [RedisHostAddress]),
+    RedisHostAddress = os:getenv("REDIS_PORT_6379_TCP_ADDR") of false -> "0.0.0.0"; Any -> Any end,
+    lager:info("[+ RH] Redis Host Found: ~p", [RedisHostAddress]),
 
-            case eredis_sub:start_link(RedisHostAddress, 6379, "") of 
-                {ok, Sub} ->
-                    lager:info("[+ RH] ... ~p connected!", [Sub]),
+    case eredis_sub:start_link(RedisHostAddress, 6379, "") of 
+        {ok, Sub} ->
+            lager:info("[+ RH] ... ~p connected!", [Sub]),
 
-                    eredis_sub:controlling_process(Sub, self()),
+            eredis_sub:controlling_process(Sub, self()),
 
-                    % Channel = atom_to_list(Name),
-                    Channel = Name,
-                    lager:info("[+ RH] Subscribing for channel: ~p", [Channel]),            
-                    R = eredis_sub:subscribe(Sub, [Channel]),    
+            % Channel = atom_to_list(Name),
+            Channel = Name,
+            lager:info("[+ RH] Subscribing for channel: ~p", [Channel]),            
+            R = eredis_sub:subscribe(Sub, [Channel]),    
 
-                    {ok, #state{sub = Sub, sockets = [SocketHandlerPid]}};
-                {error, Error} ->
-                    lager:info("[- RH] Unable connect to Redis: ~p ...", [Error]),
-                    {ok, #state{}}
-            end;
-
-        false ->
-           lager:info("[- RH] Redis Host Not Found!") 
-    end.	
+            {ok, #state{sub = Sub, sockets = [SocketHandlerPid]}};
+        {error, Error} ->
+            lager:info("[- RH] Unable connect to Redis: ~p ...", [Error]),
+            {ok, #state{}}
+    end.
 
 %% Synchronous, possible return values  
 % {reply,Reply,NewState} 
