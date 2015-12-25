@@ -19,8 +19,9 @@
             return;
         }
         /* @todo: Change to your own server IP address */
-        // ws = new WebSocket("ws://192.168.99.100:7878/websocket");
-        ws = new WebSocket("ws://192.168.23.32:7878/websocket");
+        ws = new WebSocket("ws://192.168.99.100:7878/websocket");
+        // ws = new WebSocket("ws://192.168.23.32:7878/websocket");
+        //docker run --rm -it -v /Users/barmalei4ik/Projects/Erlang/redis2socket:/app -p 7878:7878 -e HOST_IP_ADDRESS=192.168.99.100 -e HOST_PORT=7878 erlang bash
         ws.onopen = function() {
             console.log('Connected');
         };

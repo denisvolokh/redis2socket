@@ -2,7 +2,7 @@
 -behaviour(application).
 -export([start/0, start/2, stop/0, stop/1]).
 
--define(APPS, [compiler, syntax_tools, crypto, sasl, cowlib, ranch, cowboy, goldrush, lager, eredis, gproc, redis2socket]).
+-define(APPS, [compiler, syntax_tools, crypto, sasl, cowlib, ranch, cowboy, goldrush, lager, eredis, gproc, jsx, redis2socket]).
 
 ensure_started([]) -> ok;
 ensure_started([App|Apps]) ->
@@ -19,6 +19,7 @@ start(_StartType, _StartArgs) ->
     lager:info("[+] Starting Cowboy ..."),
     Dispatch = cowboy_router:compile([
             {'_', [
+                {"/api/host", api_host_handler, []},
                 {"/", cowboy_static, {file, "priv/index.html"}},
                 {"/websocket", websocket_handler, []},
                 {"/static/[...]", cowboy_static, {dir, "priv/static"}}
