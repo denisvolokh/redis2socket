@@ -26,7 +26,7 @@ start(_StartType, _StartArgs) ->
             ]}
         ]),
 
-    {ok, _} = cowboy:start_http(http, 100, [{port, 7878}], [{env, [{dispatch, Dispatch}]}]),
+    {ok, _} = cowboy:start_http(http, 100, [{port, 10110}], [{env, [{dispatch, Dispatch}]}]),
     
     redis_sup:start_link().
 
