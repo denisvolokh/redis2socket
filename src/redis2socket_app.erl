@@ -21,12 +21,12 @@ start(_StartType, _StartArgs) ->
             {'_', [
                 {"/api/host", api_host_handler, []},
                 {"/", cowboy_static, {file, "priv/index.html"}},
-                {"/websocket", websocket_handler, []},
+                {"/", websocket_handler, []},
                 {"/static/[...]", cowboy_static, {dir, "priv/static"}}
             ]}
         ]),
 
-    {ok, _} = cowboy:start_http(http, 100, [{port, 10110}], [{env, [{dispatch, Dispatch}]}]),
+    {ok, _} = cowboy:start_http(http, 100, [{port, 7878}], [{env, [{dispatch, Dispatch}]}]),
     
     redis_sup:start_link().
 
