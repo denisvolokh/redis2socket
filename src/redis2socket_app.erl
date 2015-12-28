@@ -16,7 +16,8 @@ start() ->
     ok = ensure_started(?APPS).
 
 start(_StartType, _StartArgs) ->
-    lager:info("[+] Starting Cowboy ..."),
+    Port = 7878,
+    lager:info("[+] Starting Cowboy on port: ~p", [Port]),
     Dispatch = cowboy_router:compile([
             {'_', [
                 {"/api/host", api_host_handler, []},
@@ -26,7 +27,7 @@ start(_StartType, _StartArgs) ->
             ]}
         ]),
 
-    {ok, _} = cowboy:start_http(http, 100, [{port, 7878}], [{env, [{dispatch, Dispatch}]}]),
+    {ok, _} = cowboy:start_http(http, 100, [{port, Port}], [{env, [{dispatch, Dispatch}]}]),
     
     redis_sup:start_link().
 
