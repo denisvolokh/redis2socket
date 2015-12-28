@@ -22,7 +22,7 @@ start(_StartType, _StartArgs) ->
             {'_', [
                 {"/api/host", api_host_handler, []},
                 {"/", cowboy_static, {file, "priv/index.html"}},
-                {"/", websocket_handler, []},
+                {"/websocket", websocket_handler, []},
                 {"/static/[...]", cowboy_static, {dir, "priv/static"}}
             ]}
         ]),

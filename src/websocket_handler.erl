@@ -30,17 +30,18 @@ websocket_init(_TransportName, Req, _Opts) ->
 websocket_handle({text, Msg}, Req, State) ->
     lager:info("[+] HANDLE ... ~p", [Msg]),
 
-    MessageItems = re:split(Msg, ",", [{return, list}]),
+    %MessageItems = re:split(Msg, ",", [{return, list}]),
+    MessageItems = jsx:decode(Msg),    
     
     [Command | Channels] = MessageItems,
     
     case Command of 
-        "SUBSCRIBE" ->
+        <<"SUBSCRIBE">> ->
             
             lager:info("[+] Handle SUBSCRIBE command: ~p", [Channels]),            
             spawn_listener(Channels);
 
-        "UNSUBSCRIBE" ->    
+        <<"UNSUBSCRIBE">> ->    
 
             lager:info("[+] UnSubscribing from channels: ~p", [Channels]),
             unsubscribe(Channels);    
@@ -94,7 +95,9 @@ unsubscribe([Channel | Channels]) ->
 
 
 spawn_listener([]) -> ok;
-spawn_listener([Channel | Channels]) ->
+spawn_listener([ChannelBinary | Channels]) ->
+    Channel = binary_to_list(ChannelBinary),
+    
     lager:info("[+ SH] Spawn Redis Listener process for channel: ~p", [Channel]),
     
     ExistingProcess = gproc:where({n, l, Channel}),
@@ -102,7 +105,7 @@ spawn_listener([Channel | Channels]) ->
     lager:info("[+ SH] If does already exist ~p? ~p", [Channel, ExistingProcess]),    
     
     case ExistingProcess of 
-        undefined -> 
+        undefined ->
             supervisor:start_child(redis_sup, [Channel, self()]);
         _ ->
             lager:info("[+ SH] Found: ~p", [ExistingProcess]),
