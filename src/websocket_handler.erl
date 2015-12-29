@@ -50,8 +50,8 @@ websocket_handle({text, Msg}, Req, State) ->
 
             lager:info("[+] Unknown command: ~p", [Command])
     end,
-    % {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State, hibernate };
-    {reply, {text, << "Subscribed for ", Msg/binary >>}, Req, State};
+    Reply = jsx:encode([{<<"command">>, Command}]),
+    {reply, {text, Reply}, Req, State};
 websocket_handle(_Data, Req, State) ->
     lager:info("[+ WebSocketHandler] HANDLE ..."),
     {ok, Req, State}.
@@ -80,7 +80,9 @@ terminate(_Reason, _Req, _State) ->
 %% ------------------------------------------------------------------    
 
 unsubscribe([]) -> ok;
-unsubscribe([Channel | Channels]) ->
+unsubscribe([ChannelBinary | Channels]) ->
+    Channel = binary_to_list(ChannelBinary),
+    
     ExistingProcess = gproc:where({n, l, Channel}),
 
     case ExistingProcess of 
