@@ -69,7 +69,7 @@ websocket_info(_Info, Req, State) ->
 
 websocket_terminate(_Reason, _Req, _State) ->
     % send message to redis_handler process that this socket connection is closed
-    lager:info("[+] WebSocket Terminate! ~p", [_Req]),
+    lager:info("[+] WebSocket Terminate! ~p ~p ~p", [_Reason, _Req, _State]),
     ok.
 
 terminate(_Reason, _Req, _State) ->
