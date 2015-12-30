@@ -1,0 +1,3 @@
+docker run -it -d --name=erlang-websocket -v /home/kit/apps/redis2socket:/app -p 7878:7878 --link redis-webdis:redis erlang bash
+
+erl -pa ebin -pa deps/cowboy/ebin -pa deps/cowlib/ebin -pa deps/goldrush/ebin -pa deps/lager/ebin -pa deps/ranch/ebin -pa deps/eredis/ebin -pa deps/jsx/ebin deps/gproc/ebin -s redis2socket_app -detached
